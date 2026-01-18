@@ -183,6 +183,16 @@ router.get('/:widgetKey/schema', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * GET /api/widget/:widgetKey/data
+ * Alias for the main widget endpoint (for clearer API)
+ */
+router.get('/:widgetKey/data', (req, res, next) => {
+  // Forward to main widget handler
+  req.url = `/${req.params.widgetKey}`;
+  router.handle(req, res, next);
+});
+
+/**
  * GET /api/widget/:widgetKey/embed.js
  * Returns the embeddable JavaScript widget code
  */
@@ -200,7 +210,9 @@ router.get('/:widgetKey/embed.js', asyncHandler(async (req, res) => {
     return;
   }
 
-  const apiBase = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+  // Use X-Forwarded-Proto header (set by Render/Heroku) or default to HTTPS in production
+  const protocol = req.get('X-Forwarded-Proto') || (process.env.NODE_ENV === 'production' ? 'https' : req.protocol);
+  const apiBase = process.env.API_BASE_URL || `${protocol}://${req.get('host')}`;
 
   // Return the widget JavaScript
   const js = `
